@@ -1,4 +1,4 @@
-查詢寶可夢相關的資訊
+查詢寶可夢相關的資訊\n
 抓取的資料來源
 1.寶可夢百科：https://wiki.52poke.com/
 2.寶可夢官網：https://tw.portal-pokemon.com/
