@@ -683,7 +683,7 @@ client.on('message', async (msg) => {
             let q=[];
             let Name=typeWeak;
             q= await getTypeName(typeWeak);
-            console.log(q);//q[0][i]-> 開關 q[1][i]-> 樣子 q[2][i][j]-> 屬性
+            //q[0][i]-> 開關 q[1][i]-> 樣子 q[2][i][j]-> 屬性
             if(q!=null){
                 let t="";
                 if(q[1].length!=1){
