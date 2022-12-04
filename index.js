@@ -514,30 +514,39 @@ async function searchPokedexName(keywords){
 
 //尋找寶可夢的屬性
 async function getTypeName(keywords){
-  let data=await pokeNameToNumber(keywords);
-  if(data!=null){
-      let URL="https://tw.portal-pokemon.com/play/pokedex/"+data;
-      data=await getRawData(URL);
-      let index_top=data.search(`pokemon-type__title size-20">`);
-      if(index_top!=-1){
-        let index_bottom=data.search(`<div class="pokemon-main__bottom-left">`);
-        data=data.substr(index_top,index_bottom-index_top);
-        let pokeType=[];
-        index_top=data.search(`<span>`)+6;
-        let i=0;
-        do{
+    let styleAbility=await searchAbility(keywords);
+    let data=await searchPokeWikiPage(keywords);
+    if(data!=null){
+        let index_top=data.search(`title="屬性">屬性</a></b>`)+25;
+        let index_bottom="";
+        let type=[];
+        for(let i=0;i<styleAbility[0].length;i++){
+            let tempType=[];
+            let j=0;
             data=data.substr(index_top);
-            index_bottom=data.search(`</span>`);
-            pokeType[i]=data.substr(0,index_bottom);
-            index_top=data.search(`<span>`)+6;
-            i++;
-        }while(index_top!=5);
-        return pokeType;
-      }else
+            index_bottom=data.search(`</td></tr></tbody></table>`);
+            let styleData=data.substr(0,index_bottom);
+            index_top=styleData.search(`" title="`)+9;
+            do{
+                styleData=styleData.substr(index_top);
+                index_bottom=styleData.search(`（屬性）">`);
+                tempType[j]=styleData.substr(0,index_bottom);
+                j++;
+                index_top=styleData.search(`" title="`)+9;
+            }while(index_top!=8);
+            type[i]=tempType;
+            index_top=data.search(`title="屬性">屬性</a></b>`)+25;
+        }
+        let buttonA=[];
+        for(let i=0;i<styleAbility[0].length;i++){
+            let button=false;
+            if(styleAbility[1][i].indexOf("飄浮")!=-1)
+                button=true;
+            buttonA[i]=button;
+        }
+        return [buttonA,styleAbility[0],type];
+    }else
         return;
-  }else{
-    return;
-  }
 }
 
 // 當 Bot 接收到訊息時的事件
@@ -556,7 +565,7 @@ client.on('message', async (msg) => {
     
       if(msg.content.includes("!特性") && msg.content.includes("寶可夢相關指令")===false){
         let keywords=msg.content.replace("!特性","");
-        let data=await searchAbility(keywords);
+        let data=await searchAbility(keywords);//data[0][i]->寶可夢的不同樣子 data[1][i][j]->特性名稱
         if(data!=null){
             let t="";
             let t2="";
@@ -654,7 +663,7 @@ client.on('message', async (msg) => {
             typeWeak=getType2(q[0],q[1]);
             if(typeWeak!=null ){
                 for(let i=0;i<type.length;i++){
-                    t+=`${type[i]}:${typeWeak[i]}倍, `;
+                    t+=`${type[i]}:${typeWeak[i]}倍｜`;
                 }
                 msg.channel.send(t);
             }else
@@ -674,29 +683,92 @@ client.on('message', async (msg) => {
             let q=[];
             let Name=typeWeak;
             q= await getTypeName(typeWeak);
+            console.log(q);//q[0][i]-> 開關 q[1][i]-> 樣子 q[2][i][j]-> 屬性
             if(q!=null){
-              if(q.length===2){
-                typeWeak=getType2(q[0],q[1]);
-                let t=`${Name}的屬性為${q[0]}和${q[1]} 屬性相剋如下\n`;
-                for(let i=0;i<type.length;i++){
-                    t+=`${type[i]}:${typeWeak[i]}倍, `;
+                let t="";
+                if(q[1].length!=1){
+                    t=`${Name}有${q[1].length}種樣子\n`;
+                    for(let i=0;i<q[1].length;i++){
+                        if(q[2][i].length===2){
+                            typeWeak=getType2(q[2][i][0],q[2][i][1]);
+                            if(q[0][i]!=false){
+                                t+=`${q[1][i]}　屬性為${q[2][i][0]}和${q[2][i][1]}，有飄浮特性，屬性相剋如下\n`;
+                                for(let j=0;j<type.length;j++){
+                                    if(j===4)
+                                        t+=`${type[j]}:0倍｜`;
+                                    else
+                                        t+=`${type[j]}:${typeWeak[j]}倍｜`;
+                                }
+                            }else{
+                                t+=`${q[1][i]}　屬性為${q[2][i][0]}和${q[2][i][1]}，屬性相剋如下\n`;
+                                for(let i=0;i<type.length;i++){
+                                    t+=`${type[i]}:${typeWeak[i]}倍｜`;
+                                }
+                            }
+                        }else{
+                            typeWeak=getType1(q[2][i][0]);
+                            if(q[0][i]!=false){
+                                t+=`${q[1][i]}　屬性為${q[2][i][0]}，有飄浮特性，屬性相剋如下\n`;
+                                for(let j=0;j<type.length;j++){
+                                    if(j===4)
+                                        t+=`${type[j]}:0倍｜`;
+                                    else
+                                        t+=`${type[j]}:${typeWeak[j]}倍｜`;
+                                }
+                            }else{
+                                t+=`${q[1][i]}　屬性為${q[2][i][0]}，屬性相剋如下\n`;
+                                for(let i=0;i<type.length;i++){
+                                    t+=`${type[i]}:${typeWeak[i]}倍｜`;
+                                }
+                            }
+                        }
+                        t+="\n\n";
+                    }
+                    msg.channel.send(t);
                 }
-                msg.channel.send(t);
-              }else{
-                typeWeak=getType1(q[0]);
-                let t=`${Name}的屬性為${q[0]} 屬性相剋如下\n`;
-                for(let i=0;i<type.length;i++){
-                    t+=`${type[i]}:${typeWeak[i]}倍, `;
+                else{
+                    if(q[2][0].length===2){
+                        typeWeak=getType2(q[2][0][0],q[2][0][1]);
+                        if(q[0][0]!=false){
+                            t+=`${Name}　屬性為${q[2][0][0]}和${q[2][0][1]}，有飄浮特性，屬性相剋如下\n`;
+                            for(let i=0;i<type.length;i++){
+                                if(i===4)
+                                    t+=`${type[i]}:0倍｜`;
+                                else
+                                    t+=`${type[i]}:${typeWeak[i]}倍｜`;
+                            }
+                        }else{
+                            t+=`${Name}　屬性為${q[2][0][0]}和${q[2][0][1]}，屬性相剋如下\n`;
+                            for(let i=0;i<type.length;i++){
+                                t+=`${type[i]}:${typeWeak[i]}倍｜`;
+                            }
+                        }
+                    }else{
+                        typeWeak=getType1(q[2][0][0]);
+                        if(q[0][0]!=false){
+                            t+=`${Name}　屬性為${q[2][0][0]}，有飄浮特性，屬性相剋如下\n`;
+                            for(let i=0;i<type.length;i++){
+                                if(i===4)
+                                    t+=`${type[i]}:0倍｜`;
+                                else
+                                    t+=`${type[i]}:${typeWeak[i]}倍｜`;
+                            }
+                        }else{
+                            t+=`${Name}　屬性為${q[2][0][0]}，屬性相剋如下\n`;
+                            for(let i=0;i<type.length;i++){
+                                t+=`${type[i]}:${typeWeak[i]}倍｜`;
+                            }
+                        }
+                    }
+                    msg.channel.send(t);
                 }
-                msg.channel.send(t);
-              }
             }else
-              msg.channel.send("寶可夢名稱或是屬性輸入有誤！\n（一般/格鬥/飛行/毒/地面/岩石/蟲/幽靈/鋼/火/水/草/電/超能力/冰/龍/惡/妖精）");
+                msg.channel.send("寶可夢名稱或是屬性輸入有誤！\n（一般/格鬥/飛行/毒/地面/岩石/蟲/幽靈/鋼/火/水/草/電/超能力/冰/龍/惡/妖精）");
         }else{
             let t=`這隻寶可夢的屬性相剋\n`;
             typeWeak=getType1(typeWeak);
             for(let i=0;i<type.length;i++){
-                t+=`${type[i]}:${typeWeak[i]}倍, `;
+                t+=`${type[i]}:${typeWeak[i]}倍｜`;
             }
             msg.channel.send(t);
         }
