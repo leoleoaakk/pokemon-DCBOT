@@ -920,23 +920,23 @@ client.on('message', async (msg) => {
                             let data = "";
                             switch (msg2.content) {
                                 case '1':
-                                    data = await searchPokedexNumber(keywords + "_1");
+                                    data = await searchPokedexNumber(number + "_1");
                                     msg.channel.send(data);
                                     break;
                                 case '2':
-                                    data = await searchPokedexNumber(keywords + "_2");
+                                    data = await searchPokedexNumber(number + "_2");
                                     msg.channel.send(data);
                                     break;
                                 case '3':
-                                    data = await searchPokedexNumber(keywords + "_3");
+                                    data = await searchPokedexNumber(number + "_3");
                                     msg.channel.send(data);
                                     break;
                                 case '4':
-                                    data = await searchPokedexNumber(keywords + "_4");
+                                    data = await searchPokedexNumber(number + "_4");
                                     msg.channel.send(data);
                                     break;
                                 case '5':
-                                    data = await searchPokedexNumber(keywords + "_5");
+                                    data = await searchPokedexNumber(number + "_5");
                                     msg.channel.send(data);
                                     break;
                                 case 'exit':
